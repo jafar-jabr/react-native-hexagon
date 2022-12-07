@@ -11,19 +11,43 @@ npm install react-native-hexagon
 ## Usage
 
 ```js
-import { HexagonView } from "react-native-hexagon";
+import { HexagonView } from 'react-native-hexagon';
 
 // ...
 
- <HexagonView
-   src="https://picsum.photos/200/300.jpg"
-   borderColor="#FFC901"
-   borderWidth={6}
-   cornerRadius={6}
-   width={32}
-   height={32}
-      />
+export default function App() {
+  const imgSource = {
+    uri: 'https://picsum.photos/200/300.jpg',
+    borderColor: '#d3d363',
+    borderWidth: 5,
+    cornerRadius: 16,
+  };
+  return (
+    <View style={styles.container}>
+      <HexagonView style={styles.avatar} source={imgSource} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatar: {
+    height: 232,
+    width: 232,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
 ```
+
+![image](https://firebasestorage.googleapis.com/v0/b/jj-tech.appspot.com/o/react-native-hexagon.png?alt=media&token=1e4ba250-e54a-42bd-9b1a-ad658444f31e
+)
+
 
 ## Contributing
 

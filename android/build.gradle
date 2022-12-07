@@ -1,139 +1,68 @@
-buildscript {
-  repositories {
-      google()
-      mavenCentral()
-  }
-
-  dependencies {
-    classpath 'com.android.tools.build:gradle:3.5.3'
-  }
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-def isNewArchitectureEnabled() {
-  return rootProject.hasProperty("newArchEnabled") &&  rootProject.getProperty("newArchEnabled") == "true"
+buildscript {
+  // The Android Gradle plugin is only required when opening the android folder stand-alone.
+  // This avoids unnecessary downloads and potential conflicts when the library is included as a
+  // module dependency in an application project.
+  if (project == rootProject) {
+    repositories {
+      google()
+      mavenCentral()
+    }
+    dependencies {
+      classpath 'com.android.tools.build:gradle:3.5.4'
+    }
+  }
 }
 
 apply plugin: 'com.android.library'
 
-if (isNewArchitectureEnabled()) {
-  apply plugin: 'com.facebook.react'
-}
-
-def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['Hexagon_' + name]
-}
-
-def getExtOrIntegerDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties['Hexagon_' + name]).toInteger()
-}
-
 android {
-  compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
-
+  compileSdkVersion safeExtGet('compileSdkVersion', 28)
+  buildToolsVersion safeExtGet('buildToolsVersion', '28.0.3')
   defaultConfig {
-    minSdkVersion getExtOrIntegerDefault('minSdkVersion')
-    targetSdkVersion getExtOrIntegerDefault('targetSdkVersion')
-    buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+    minSdkVersion safeExtGet('minSdkVersion', 16)
+    targetSdkVersion safeExtGet('targetSdkVersion', 28)
+    versionCode 1
+    versionName "1.0"
   }
-  buildTypes {
-    release {
-      minifyEnabled false
+  sourceSets {
+    main {
+      java {
+        if (safeExtGet('excludeAppGlideModule', false)) {
+          srcDir "src"
+          exclude "**/HexagonImageGlideModule.java"
+        }
+      }
     }
   }
-
   lintOptions {
-    disable 'GradleCompatible'
+    abortOnError false
   }
-
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
-
 }
 
 repositories {
-  mavenCentral()
+  mavenLocal()
+  maven {
+    // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+    url "$rootDir/../node_modules/react-native/android"
+  }
+  maven {
+    // Android JSC is installed from npm
+    url "$rootDir/../node_modules/jsc-android/dist"
+  }
   google()
-
-  def found = false
-  def defaultDir = null
-  def androidSourcesName = 'React Native sources'
-
-  if (rootProject.ext.has('reactNativeAndroidRoot')) {
-    defaultDir = rootProject.ext.get('reactNativeAndroidRoot')
-  } else {
-    defaultDir = new File(
-      projectDir,
-      '/../../../node_modules/react-native/android'
-    )
-  }
-
-  if (defaultDir.exists()) {
-    maven {
-      url defaultDir.toString()
-      name androidSourcesName
-    }
-
-    logger.info(":${project.name}:reactNativeAndroidRoot ${defaultDir.canonicalPath}")
-    found = true
-  } else {
-    def parentDir = rootProject.projectDir
-
-    1.upto(5, {
-      if (found) return true
-      parentDir = parentDir.parentFile
-
-      def androidSourcesDir = new File(
-        parentDir,
-        'node_modules/react-native'
-      )
-
-      def androidPrebuiltBinaryDir = new File(
-        parentDir,
-        'node_modules/react-native/android'
-      )
-
-      if (androidPrebuiltBinaryDir.exists()) {
-        maven {
-          url androidPrebuiltBinaryDir.toString()
-          name androidSourcesName
-        }
-
-        logger.info(":${project.name}:reactNativeAndroidRoot ${androidPrebuiltBinaryDir.canonicalPath}")
-        found = true
-      } else if (androidSourcesDir.exists()) {
-        maven {
-          url androidSourcesDir.toString()
-          name androidSourcesName
-        }
-
-        logger.info(":${project.name}:reactNativeAndroidRoot ${androidSourcesDir.canonicalPath}")
-        found = true
-      }
-    })
-  }
-
-  if (!found) {
-    throw new GradleException(
-      "${project.name}: unable to locate React Native android sources. " +
-      "Ensure you have you installed React Native as a dependency in your project and try again."
-    )
-  }
+  mavenCentral()
 }
 
+def glideVersion = safeExtGet('glideVersion', '4.12.0')
 
 dependencies {
-    //noinspection GradleDynamicVersion
-  implementation "com.facebook.react:react-native:+"
-  implementation 'com.github.siyamed:android-shape-imageview:0.9.+@aar'
-// From node_modules
-}
-
-if (isNewArchitectureEnabled()) {
-  react {
-    jsRootDir = file("../src/")
-    libraryName = "HexagonView"
-    codegenJavaPackageName = "com.hexagon"
-  }
+  //noinspection GradleDynamicVersion
+  implementation 'com.facebook.react:react-native:+'  // From node_modules
+  implementation "com.github.bumptech.glide:glide:${glideVersion}"
+  implementation "com.github.bumptech.glide:okhttp3-integration:${glideVersion}"
+  annotationProcessor "com.github.bumptech.glide:compiler:${glideVersion}"
 }

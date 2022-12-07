@@ -1,141 +1,123 @@
 import UIKit
 import Foundation
+import React
 
 
-@objc(HexagonViewManager)
-class HexagonViewManager: RCTViewManager {
 
 
-  override func view() -> (HexagonView) {
-    return HexagonView()
+@objc(HexagonImageViewManager)
+class HexagonImageViewManager: RCTViewManager {
+    
+
+ func methodQueue() -> DispatchQueue {
+            return bridge.uiManager.methodQueue
+      }
+
+  override func view() -> (HexagonImageView) {
+    return HexagonImageView()
   }
 
-  @objc override static func requiresMainQueueSetup() -> Bool {
-    return false
-  }
+
+    override class func requiresMainQueueSetup() -> Bool {
+           return true
+       }
 }
 
-class HexagonView : UIView {
-
-    let rootController = ViewController();
+class HexagonImageView : UIView {
+    var rootController = ViewController();
+    
+    
+    
+   
     @IBOutlet weak var imageView: UIImageView!
     var rect = CGRectMake(0, 0, 48, 48)
+    var _source = NSDictionary()
 
-    override init(frame: CGRect) {
-           super.init(frame: frame)
-            rect=frame
-           self.addSubview(rootController.view);
-       }
+    override public init(frame: CGRect) {
+        
+        super.init(frame: frame)
+        
+       
+       
+        
+        rect=frame
+        addSubview(rootController.view);
+      }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-  @objc var src: String = "" {
-    didSet {
-        print( "============= src = \(src)")
 
-        rootController.setData(url: src)
-    }
-  }
-
-    @objc var borderColor: String = "" {
-      didSet {
-          print( "============= borderColor = \(borderColor)")
-
-          rootController.setBorderColor(_borderColor: borderColor)
-      }
-    }
-
-    @objc var borderWidth: Int = 0 {
-      didSet {
-          print( "============= borderWidth = \(borderWidth)")
-
-          rootController.setBorderWidth(_borderWidth: borderWidth)
-      }
-    }
-
-    @objc var cornerRadius: Int = 0 {
-      didSet {
-          print( "============= cornerRadius = \(cornerRadius)")
-
-          rootController.setCornerRadius(_cornerRadius: cornerRadius)
-      }
-    }
-
-    @objc var width: Int = 0 {
-
+    @objc var source: NSDictionary = [:]  {
          didSet {
-             var mWidth=width+8
-             rootController.setSize(_size:mWidth)
-         }
-       }
-       @objc var height: Int = 0 {
-         didSet {
-             var mHeight=height+8
-             rootController.setSize(_size:mHeight)
-
+             _source=source
          }
        }
 
 
+    override open func layoutSubviews() {
+        
+        rect =
+        CGRect(x:0,y:0,width:bounds.size.width,height:bounds.size.height)
+        rootController.setData(data: _source,rect: rect)
+
+      }
 }
+
 class ViewController: UIViewController {
 
+    
     var imageView:UIImageView = UIImageView.init()
     var borderColor:String = ""
-    var borderWidth:Int = 0
-    var size:Int = 0
-    var cornerRadius:Int = 0
+    var borderWidth:CGFloat = 0
+    var cornerRadius:CGFloat = 0
+    var viewRect = CGRectMake(0, 0, 48, 48)
+
     override func viewDidLoad() {
     super.viewDidLoad()
+     
         addImageView()
      }
 
+
     func addImageView(name:String = "default"){
-
-        if(size > 0 && borderColor != "" && borderWidth > 0 && cornerRadius > 0){
-            let image = UIImage(named: name)
-            imageView.image = image
-            imageView.frame = CGRect(x: 0, y: 0, width: size, height: size)
+       
+        
+        if(borderColor != "" && borderWidth >= 0 && cornerRadius >= 0){
+            imageView.frame = viewRect
+            self.view.frame = viewRect
+            self.view.layoutIfNeeded()
             view.addSubview(imageView)
-            let goodWidth = CGFloat(borderWidth) * 0.8
-            setupHexagonImageView(imageView: imageView,cornerRadius:cornerRadius,lineWidth:Int(goodWidth.rounded(.down)),borderColor:borderColor)
+            setupHexagonImageView(imageView: imageView,cornerRadius:cornerRadius,lineWidth:borderWidth,borderColor:borderColor)
         }
 
+   }
+
+
+    func setData( data :NSDictionary,rect : CGRect){
+        viewRect=rect
+        var dic:NSDictionary = NSDictionary(dictionary:data)
+
+        guard let url = dic.object(forKey: "uri") as? String else {
+            return
+        }
+        guard let _borderColor = dic.object(forKey: "borderColor") as? String else {
+            return
+        }
+        guard let _borderWidth = dic.object(forKey: "borderWidth") as? CGFloat else {
+            return
+        }
+        guard let _cornerRadius = dic.object(forKey: "cornerRadius") as? CGFloat else {
+            return
         }
 
-
-    func setData( url :String){
-        imageView.load(url: URL(string: url)!)
-
-    }
-
-    func setBorderColor( _borderColor :String) {
-        print( "============= setBorderColor = \(_borderColor)")
-
-       borderColor=_borderColor
-        addImageView()
-
-      }
-    func setSize( _size :Int) {
-        print( "============= setSize = \(_size)")
-        //imageView.frame = CGRect(x: 0, y: 0, width: _size, height: _size)
-        size=_size
-        addImageView()
-      }
-    func  setBorderWidth( _borderWidth :Int) {
-        print(" ============= setBorderWidth \(_borderWidth)")
-        borderWidth=_borderWidth
-        addImageView()
-      }
-
-    func setCornerRadius( _cornerRadius :Int) {
-        cornerRadius=_cornerRadius
-        addImageView()
-        print( "============= setBorderWidth = \(_cornerRadius)")
-
-    }
+           borderColor = _borderColor
+           borderWidth = _borderWidth * 0.7
+           cornerRadius = _cornerRadius * 0.4
+           imageView.load(url: URL(string: url  )!)
+           addImageView()
+       }
 
     func hexStringToUIColor(hexColor: String) -> UIColor {
       let stringScanner = Scanner(string: hexColor)
@@ -153,20 +135,20 @@ class ViewController: UIViewController {
       return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
     }
 
-    func setupHexagonImageView(imageView: UIImageView,cornerRadius:Int,lineWidth:Int,borderColor:String) {
-        let _lineWidth: CGFloat = CGFloat(lineWidth)
-        let path = roundedPolygonPath(rect: imageView.bounds, lineWidth: _lineWidth, sides: 6, cornerRadius: CGFloat(cornerRadius), rotationOffset: CGFloat(M_PI / 2.0))
+    func setupHexagonImageView(imageView: UIImageView,cornerRadius:CGFloat,lineWidth:CGFloat,borderColor:String) {
+
+        let path = roundedPolygonPath(rect: imageView.bounds, lineWidth: lineWidth , sides: 6, cornerRadius: cornerRadius , rotationOffset: CGFloat(M_PI / 2.0))
 
        let mask = CAShapeLayer()
         mask.path = path.cgPath
-       mask.lineWidth = _lineWidth
+       mask.lineWidth = lineWidth
        mask.strokeColor = UIColor.clear.cgColor
        mask.fillColor = hexStringToUIColor(hexColor: borderColor).cgColor
        imageView.layer.mask = mask
 
        let border = CAShapeLayer()
         border.path = path.cgPath
-       border.lineWidth = _lineWidth
+       border.lineWidth = lineWidth
        border.strokeColor = hexStringToUIColor(hexColor: borderColor).cgColor
        border.fillColor = UIColor.clear.cgColor
        imageView.layer.addSublayer(border)
@@ -176,7 +158,7 @@ class ViewController: UIViewController {
      -> UIBezierPath {
         let path = UIBezierPath()
         let theta: CGFloat = CGFloat(2.0 * M_PI) / CGFloat(sides) // How much to turn at every corner
-        let offset: CGFloat = cornerRadius * 0     // Offset from which to start rounding corners
+        let offset: CGFloat = cornerRadius * tan(theta / 2.0)     // Offset from which to start rounding corners
         let width = min(rect.size.width, rect.size.height)        // Width of the square
 
         let center = CGPoint(x: rect.origin.x + width / 2.0, y: rect.origin.y + width / 2.0)
@@ -213,6 +195,7 @@ class ViewController: UIViewController {
          let transform = CGAffineTransform(translationX: 0,
          y: 0)
          path.apply(transform)
+
         return path
     }
 }
@@ -230,9 +213,13 @@ extension UIImageView {
             }
         }
     }
+    
 }
 extension UIViewController {
     func embed(_ viewController:UIViewController, inView view:UIView){
+        self.edgesForExtendedLayout = UIRectEdge.bottom;
+        self.extendedLayoutIncludesOpaqueBars = true
+        
         viewController.willMove(toParent: self)
         viewController.view.frame = view.bounds
         view.addSubview(viewController.view)
