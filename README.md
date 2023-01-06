@@ -1,6 +1,6 @@
 # react-native-hexagon
 
-hexagon view
+hexagon image for react native apps.
 
 ## Installation
 
