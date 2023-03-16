@@ -32,6 +32,8 @@ public class HexagonImageView extends AppCompatImageView {
   private Paint paint;
   private BitmapShader shader;
   private Paint paintBorder;
+  private boolean isRotated=false;
+
   private int mBorderWidth = 4;
   private int mSideCount=6;
   private int  mCornerRadius=0;
@@ -79,7 +81,7 @@ public class HexagonImageView extends AppCompatImageView {
 
   public void setBorderWidth(int borderWidth)  {
     this.mBorderWidth = borderWidth;
-    this.invalidate();
+    // this.invalidate();
   }
   public void setCornerRadius(int cornerRadius) {
     mCornerRadius=cornerRadius*3;
@@ -92,7 +94,7 @@ public class HexagonImageView extends AppCompatImageView {
     if (paintBorder != null)
       paintBorder.setColor(borderColor);
 
-    this.invalidate();
+    // this.invalidate();
   }
 
   public void calculatePath() {
@@ -123,7 +125,7 @@ public class HexagonImageView extends AppCompatImageView {
     this.hexagonBorderPath.lineTo(centerX + halfRadiusBorder, centerY + triangleBorderHeight);
     this.hexagonBorderPath.lineTo(centerX - halfRadiusBorder, centerY + triangleBorderHeight);
     this.hexagonBorderPath.close();
-    invalidate();
+    this.invalidate();
   }
 
 
@@ -149,18 +151,19 @@ public class HexagonImageView extends AppCompatImageView {
       RectF bounds = new RectF();
       hexagonBorderPath.computeBounds(bounds, true);
       hexagonPath.computeBounds(bounds, true);
-      mMatrix.postRotate(30, bounds.centerX(), bounds.centerY());
-      hexagonBorderPath.transform(mMatrix);
-      hexagonPath.transform(mMatrix);
-
+      if(!isRotated){
+        mMatrix.postRotate(30, bounds.centerX(), bounds.centerY());
+        hexagonBorderPath.transform(mMatrix);
+        hexagonPath.transform(mMatrix);
+        isRotated=true;
+      }
       canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
       shader = new BitmapShader(Bitmap.createScaledBitmap(image, canvas.getWidth(), canvas.getHeight(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
       paint.setShader(shader);
       canvas.drawPath(hexagonBorderPath, paintBorder);
       canvas.drawPath(hexagonPath, paint);
       canvas.clipPath(hexagonPath, Region.Op.DIFFERENCE);
-
-
+      canvas.save();
     }
 
   }
