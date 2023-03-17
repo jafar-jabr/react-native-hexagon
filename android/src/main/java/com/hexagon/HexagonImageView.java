@@ -12,12 +12,15 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathEffect;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Parcelable;
 import android.util.AttributeSet;
-
+import android.util.Log;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
 public class HexagonImageView extends AppCompatImageView {
@@ -141,10 +144,9 @@ public class HexagonImageView extends AppCompatImageView {
   @SuppressLint("DrawAllocation")
   @Override
   public void onDraw(Canvas canvas){
+    Log.d(" HexagonImageView ============== onDraw","isRotated ="+isRotated);
     super.onDraw(canvas);
-
     loadBitmap();
-
     // init shader
     if (image != null) {
       Matrix mMatrix = new Matrix();
@@ -156,7 +158,7 @@ public class HexagonImageView extends AppCompatImageView {
         hexagonBorderPath.transform(mMatrix);
         hexagonPath.transform(mMatrix);
         isRotated=true;
-      }
+     }
       canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
       shader = new BitmapShader(Bitmap.createScaledBitmap(image, canvas.getWidth(), canvas.getHeight(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
       paint.setShader(shader);
@@ -168,6 +170,12 @@ public class HexagonImageView extends AppCompatImageView {
 
   }
 
+  @Override
+  protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    Log.d(" HexagonImageView ============== onLayout","changed ="+changed);
+    isRotated=false;
+    super.onLayout(changed, left, top, right, bottom);
+  }
   @Override
   public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
