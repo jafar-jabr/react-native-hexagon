@@ -3,12 +3,9 @@ import Foundation
 import React
 
 
-
-
 @objc(HexagonImageViewManager)
 class HexagonImageViewManager: RCTViewManager {
     
-
  func methodQueue() -> DispatchQueue {
             return bridge.uiManager.methodQueue
       }
@@ -17,29 +14,25 @@ class HexagonImageViewManager: RCTViewManager {
     return HexagonImageView()
   }
 
-
-    override class func requiresMainQueueSetup() -> Bool {
+  override class func requiresMainQueueSetup() -> Bool {
            return true
        }
 }
 
 class HexagonImageView : UIView {
     var rootController = ViewController();
+
+    override open func layoutIfNeeded() {
+        NSLog("[layoutIfNeeded] layoutIfNeeded")
+
+    }
     
-    
-    
-   
     @IBOutlet weak var imageView: UIImageView!
     var rect = CGRectMake(0, 0, 48, 48)
     var _source = NSDictionary()
 
     override public init(frame: CGRect) {
-        
         super.init(frame: frame)
-        
-       
-       
-        
         rect=frame
         addSubview(rootController.view);
       }
@@ -47,43 +40,38 @@ class HexagonImageView : UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-
+    
     @objc var source: NSDictionary = [:]  {
+
          didSet {
              _source=source
+             rootController.setData(data: source,rect: rect)
          }
        }
 
-
     override open func layoutSubviews() {
-        
         rect =
         CGRect(x:0,y:0,width:bounds.size.width,height:bounds.size.height)
         rootController.setData(data: _source,rect: rect)
-
       }
 }
 
 class ViewController: UIViewController {
 
-    
     var imageView:UIImageView = UIImageView.init()
     var borderColor:String = ""
     var borderWidth:CGFloat = 0
     var cornerRadius:CGFloat = 0
     var viewRect = CGRectMake(0, 0, 48, 48)
-
+    
     override func viewDidLoad() {
     super.viewDidLoad()
-     
         addImageView()
      }
 
 
     func addImageView(name:String = "default"){
        
-        
         if(borderColor != "" && borderWidth >= 0 && cornerRadius >= 0){
             imageView.frame = viewRect
             self.view.frame = viewRect
